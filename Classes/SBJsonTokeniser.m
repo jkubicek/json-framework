@@ -116,7 +116,7 @@
 	
 	len -= 1;
 	
-	NSMutableData *data = [NSMutableData dataWithCapacity:len * 1.1];
+	NSMutableData *data = [NSMutableData dataWithCapacity:len * 1.1f];
 	
 	char c;
 	NSUInteger i = 1;
@@ -316,25 +316,25 @@ again: while (i < len) {
     return ret;
 }
 
-- (int)parseUnicodeEscape:(const char *)bytes index:(NSUInteger *)index {
-	int hi = [self decodeHexQuad:bytes + *index];
+- (int)parseUnicodeEscape:(const char *)bytes index:(NSUInteger *)i {
+	int hi = [self decodeHexQuad:bytes + *i];
 	if (hi == -2) return -2; // EOF
 	if (hi < 0) {
 		self.error = @"Missing hex quad";
 		return -1;
 	}
-	*index += 4;
+	*i += 4;
 	
 	if (CFStringIsSurrogateHighCharacter(hi)) {
 		int lo = -1;
-		if (bytes[(*index)++] == '\\' && bytes[(*index)++] == 'u')
-			lo = [self decodeHexQuad:bytes + *index];
+		if (bytes[(*i)++] == '\\' && bytes[(*i)++] == 'u')
+			lo = [self decodeHexQuad:bytes + *i];
 		
 		if (lo < 0) {
 			self.error = @"Missing low character in surrogate pair";
 			return -1;
 		}
-		*index += 4;
+		*i += 4;
 			
 		if (!CFStringIsSurrogateLowCharacter(lo)) {
 			self.error = @"Invalid low surrogate char";
@@ -349,24 +349,25 @@ again: while (i < len) {
 	return hi;
 }
 
-- (NSString*)decodeUnicodeEscape:(const char *)bytes index:(NSUInteger *)index {
-	unichar hi = [self decodeHexQuad:bytes + *index];
-	if (hi < 0) {
+- (NSString*)decodeUnicodeEscape:(const char *)bytes index:(NSUInteger *)i {
+	unichar hi = [self decodeHexQuad:bytes + *i];
+    NSInteger hiInt = (int)hi;
+	if (hiInt < 0) {
 		self.error = @"Missing hex quad";
 		return nil;
 	}
-	*index += 4;
+	*i += 4;
 
 	if (CFStringIsSurrogateHighCharacter(hi)) {     // high surrogate char?
 		int lo = -1;
-		if (bytes[(*index)++] == '\\' && bytes[(*index)++] == 'u')
-			lo = [self decodeHexQuad:bytes + *index];
+		if (bytes[(*i)++] == '\\' && bytes[(*i)++] == 'u')
+			lo = [self decodeHexQuad:bytes + *i];
 			
 		if (lo < 0) {
 			self.error = @"Missing low character in surrogate pair";
 			return nil;
 		}
-		*index += 4;
+		*i += 4;
 			
 		if (!CFStringIsSurrogateLowCharacter(lo)) {
 			self.error = @"Invalid low surrogate char";
