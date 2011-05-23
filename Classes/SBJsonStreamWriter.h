@@ -55,6 +55,15 @@
 
 @end
 
+@class SBJsonStreamWriter;
+
+@protocol SBJsonStreamWriterDelegate
+
+- (void)writer:(SBJsonStreamWriter*)writer appendBytes:(const void *)bytes length:(NSUInteger)length;
+
+@end
+
+@class SBStateStack;
 @class SBJsonStreamWriterState;
 
 /**
@@ -72,23 +81,20 @@
 
 @interface SBJsonStreamWriter : NSObject {
 	NSString *error;
-	SBJsonStreamWriterState **states;
-	NSMutableData *data;
-	NSUInteger depth, maxDepth;
+    SBStateStack *stateStack;
+    __weak SBJsonStreamWriterState *state;
+    id<SBJsonStreamWriterDelegate> delegate;
+	NSUInteger maxDepth;
     BOOL sortKeys, humanReadable;
 }
 
-/**
- @brief The data written to the stream so far.
- 
- This is a mutable object. This means that you can write a chunk of its
- contents to an NSOutputStream, then chop as many bytes as you wrote off
- the beginning of the buffer.
- */
-@property(readonly) NSMutableData *data;
+@property (nonatomic, assign) __weak SBJsonStreamWriterState *state; /// Internal
+@property (nonatomic, readonly, retain) SBStateStack *stateStack; /// Internal 
 
-@property(readonly) NSObject **states;
-@property(readonly) NSUInteger depth;
+/**
+ Delegate that will receive messages with output.
+ */
+@property (assign) id<SBJsonStreamWriterDelegate> delegate;
 
 /**
  @brief The maximum recursing depth.
@@ -159,5 +165,6 @@
 
 @interface SBJsonStreamWriter (Private)
 - (BOOL)writeValue:(id)v;
+- (void)appendBytes:(const void *)bytes length:(NSUInteger)length;
 @end
 

@@ -29,6 +29,12 @@
 
 #import "SBJsonWriter.h"
 #import "SBJsonStreamWriter.h"
+#import "SBJsonStreamWriterAccumulator.h"
+
+
+@interface SBJsonWriter ()
+@property (copy) NSString *error;
+@end
 
 @implementation SBJsonWriter
 
@@ -40,8 +46,9 @@
 
 - (id)init {
     self = [super init];
-    if (self)
-        self.maxDepth = 512;
+    if (self) {
+        self.maxDepth = 512;        
+    }
     return self;
 }
 
@@ -71,10 +78,15 @@
 }
 
 - (NSData*)dataWithObject:(id)object {	
+    self.error = nil;
+
+    SBJsonStreamWriterAccumulator *accumulator = [[[SBJsonStreamWriterAccumulator alloc] init] autorelease];
+    
 	SBJsonStreamWriter *streamWriter = [[[SBJsonStreamWriter alloc] init] autorelease];
 	streamWriter.sortKeys = self.sortKeys;
 	streamWriter.maxDepth = self.maxDepth;
 	streamWriter.humanReadable = self.humanReadable;
+    streamWriter.delegate = accumulator;
 	
 	BOOL ok = NO;
 	if ([object isKindOfClass:[NSDictionary class]])
@@ -91,12 +103,11 @@
 	}
 	
 	if (ok)
-		return streamWriter.data;
+		return accumulator.data;
 	
 	self.error = streamWriter.error;
 	return nil;	
 }
 	
 	
-
 @end

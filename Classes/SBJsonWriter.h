@@ -51,6 +51,7 @@
  way you would expect.
  
  */
+
 @interface SBJsonWriter : NSObject {
 	
 @protected
@@ -77,7 +78,7 @@
  You need to check the return value of the call you're making to figure out
  if the call actually failed, before you know call this method.
  */
-@property(copy) NSString *error;
+@property (readonly, copy) NSString *error;
 
 /**
  @brief Whether we are generating human-readable (multiline) JSON.
