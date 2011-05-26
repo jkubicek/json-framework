@@ -32,7 +32,6 @@
 
 #import "SBJsonStreamWriterState.h"
 #import "SBJsonStreamWriter.h"
-#import "SBStateStack.h"
 
 #define SINGLETON \
 + (id)sharedInstance { \
@@ -49,15 +48,9 @@
 - (BOOL)expectingKey:(SBJsonStreamWriter*)writer { return NO; }
 - (void)transitionState:(SBJsonStreamWriter *)writer {}
 - (void)appendWhitespace:(SBJsonStreamWriter*)writer {
-<<<<<<< HEAD
-	[writer.data appendBytes:"\n" length:1];
-	for (NSUInteger i = 0; i < writer.depth; i++)
-	    [writer.data appendBytes:"  " length:2];
-=======
 	[writer appendBytes:"\n" length:1];
 	for (NSUInteger i = 0; i < writer.stateStack.count; i++)
 	    [writer appendBytes:"  " length:2];
->>>>>>> d2ab6e6aeb9987780ffa9e9dce27fb0cbae2a6fd
 }
 @end
 

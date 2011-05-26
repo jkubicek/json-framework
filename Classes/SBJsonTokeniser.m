@@ -35,6 +35,8 @@
 #define SBStringIsIllegalSurrogateHighCharacter(x) (((x) >= 0xd800) && ((x) <= 0xdfff))
 
 
+
+
 @implementation SBJsonTokeniser
 
 @synthesize error = _error;
@@ -137,74 +139,6 @@
     return YES;
 }
 
-<<<<<<< HEAD
-- (NSString*)getDecodedStringToken {
-	NSUInteger len;
-	const char *bytes;
-	[self getToken:&bytes length:&len];
-	
-	len -= 1;
-	
-	NSMutableData *data = [NSMutableData dataWithCapacity:len * 1.1f];
-	
-	char c;
-	NSUInteger i = 1;
-again: while (i < len) {
-		switch (c = bytes[i++]) {
-			case '\\':
-				switch (c = bytes[i++]) {
-					case '\\':
-					case '/':
-					case '"':
-						break;
-						
-					case 'b':
-						c = '\b';
-						break;
-						
-					case 'n':
-						c = '\n';
-						break;
-						
-					case 'r':
-						c = '\r';
-						break;
-						
-					case 't':
-						c = '\t';
-						break;
-						
-					case 'f':
-						c = '\f';
-						break;
-						
-					case 'u': {
-						NSString *s = [self decodeUnicodeEscape:bytes index:&i];
-						NSAssert(s, @"Illegal unicode escape");
-						[data appendData:[s dataUsingEncoding:NSUTF8StringEncoding]];
-						goto again;
-						break;
-					}
-						
-					default:
-						NSAssert(NO, @"Should never get here");
-						break;
-				}
-				break;
-				
-			case 0 ... 0x1F:
-				self.error = @"Unescaped control chars";
-				return nil;
-				break;
-				
-			default:
-				break;
-		}
-		[data appendBytes:&c length:1];
-	}
-	
-	return [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
-=======
 - (sbjson_token_t)getStringToken:(NSObject**)token {
     NSMutableString *acc = nil;
 
@@ -305,7 +239,6 @@ again: while (i < len) {
         }
     }
     return sbjson_token_eof;
->>>>>>> d2ab6e6aeb9987780ffa9e9dce27fb0cbae2a6fd
 }
 
 - (sbjson_token_t)getNumberToken:(NSObject**)token {
@@ -334,76 +267,6 @@ again: while (i < len) {
         }
     }
 
-<<<<<<< HEAD
-- (int)parseUnicodeEscape:(const char *)bytes index:(NSUInteger *)i {
-	int hi = [self decodeHexQuad:bytes + *i];
-	if (hi == -2) return -2; // EOF
-	if (hi < 0) {
-		self.error = @"Missing hex quad";
-		return -1;
-	}
-	*i += 4;
-	
-	if (CFStringIsSurrogateHighCharacter(hi)) {
-		int lo = -1;
-		if (bytes[(*i)++] == '\\' && bytes[(*i)++] == 'u')
-			lo = [self decodeHexQuad:bytes + *i];
-		
-		if (lo < 0) {
-			self.error = @"Missing low character in surrogate pair";
-			return -1;
-		}
-		*i += 4;
-			
-		if (!CFStringIsSurrogateLowCharacter(lo)) {
-			self.error = @"Invalid low surrogate char";
-			return -1;
-		}		
-	} else if (SBStringIsIllegalSurrogateHighCharacter(hi)) {
-		self.error = @"Invalid high character in surrogate pair";
-		return -1;
-	}
-
-
-	return hi;
-}
-
-- (NSString*)decodeUnicodeEscape:(const char *)bytes index:(NSUInteger *)i {
-	unichar hi = [self decodeHexQuad:bytes + *i];
-    NSInteger hiInt = (int)hi;
-	if (hiInt < 0) {
-		self.error = @"Missing hex quad";
-		return nil;
-	}
-	*i += 4;
-
-	if (CFStringIsSurrogateHighCharacter(hi)) {     // high surrogate char?
-		int lo = -1;
-		if (bytes[(*i)++] == '\\' && bytes[(*i)++] == 'u')
-			lo = [self decodeHexQuad:bytes + *i];
-			
-		if (lo < 0) {
-			self.error = @"Missing low character in surrogate pair";
-			return nil;
-		}
-		*i += 4;
-			
-		if (!CFStringIsSurrogateLowCharacter(lo)) {
-			self.error = @"Invalid low surrogate char";
-			return nil;
-		}
-			
-		unichar pair[2] = {hi, lo};
-		return [NSString stringWithCharacters:pair length:2];
-			
-	} else if (SBStringIsIllegalSurrogateHighCharacter(hi)) {		
-		self.error = @"Invalid high character in surrogate pair";
-		return nil;
-	}
-	
-	return [NSString stringWithCharacters:&hi length:1];
-}
-=======
     unsigned long long mantissa = 0;
     int mantissa_length = 0;
 
@@ -429,7 +292,6 @@ again: while (i < len) {
             mantissa += (ch - '0');
             mantissa_length++;
             exponent--;
->>>>>>> d2ab6e6aeb9987780ffa9e9dce27fb0cbae2a6fd
 
             if (![_stream getNextUnichar:&ch])
                 return sbjson_token_eof;
@@ -459,11 +321,11 @@ again: while (i < len) {
                 return sbjson_token_eof;
         }
 
-        short exp = 0;
+        short exp1 = 0;
         short exp_length = 0;
         while ([digits characterIsMember:ch]) {
-            exp *= 10;
-            exp += (ch - '0');
+            exp1 *= 10;
+            exp1 += (ch - '0');
             exp_length++;
 
             if (![_stream getNextUnichar:&ch])
@@ -476,9 +338,9 @@ again: while (i < len) {
         }
 
         if (expIsNegative)
-            exponent -= exp;
+            exponent -= exp1;
         else
-            exponent += exp;
+            exponent += exp1;
     }
 
     if (!mantissa_length && isNegative) {
@@ -487,13 +349,13 @@ again: while (i < len) {
 
     } else if (mantissa_length >= 19) {
         // The super slow path... for REALLY long numbers
-        NSUInteger index = _stream.index;        
-        NSUInteger length = index - numberStart;
+        NSUInteger index1 = _stream.index;        
+        NSUInteger length = index1 - numberStart;
         char bytes[length+1];
 
         _stream.index = numberStart;
         [_stream getBytes:bytes length:length];
-        _stream.index = index;
+        _stream.index = index1;
 
         NSString *numberString = [[[NSString alloc] initWithBytes:bytes length:length encoding:NSUTF8StringEncoding] autorelease];
         *token = [NSDecimalNumber decimalNumberWithString:numberString];
