@@ -71,7 +71,7 @@
     char bytes[len+1];
     (void)[_stream getBytes:bytes length:len];
 
-    NSString *fmt = [NSString stringWithFormat:@"Expected '%%s' but found '%%.%us'", len];
+    NSString *fmt = [NSString stringWithFormat:@"Expected '%%s' but found '%%.%lus'", (unsigned long)len];
     self.error = [NSString stringWithFormat:fmt, pattern, bytes];
     return sbjson_token_error;
 }
